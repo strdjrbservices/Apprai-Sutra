@@ -2,7 +2,7 @@ import os
 # Suppress gRPC ALTS credentials warnings when not on GCP
 os.environ["GRPC_VERBOSITY"] = "ERROR"
 
-from fastapi import FastAPI, APIRouter, UploadFile, File, HTTPException, Form
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from google.api_core import exceptions as google_exceptions
 from fastapi.middleware.cors import CORSMiddleware
 from .pdf_extractor import (
@@ -14,9 +14,6 @@ import traceback
 
 app = FastAPI(title="Appraisal Extractor API")
 
-# Create a router to handle all API endpoints
-api_router = APIRouter()
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,11 +22,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@api_router.get("/health")
+@app.get("/api/health")
 def health():
     return {"status": "ok"}
 
-@api_router.post("/extract-by-category")
+@app.post("/api/extract-by-category")
 async def extract_by_category(file: UploadFile = File(...), form_type: str = Form(...), category: str = Form(None)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file uploaded")
@@ -54,7 +51,7 @@ async def extract_by_category(file: UploadFile = File(...), form_type: str = For
         except Exception:
             pass
 
-@api_router.post("/extract")
+@app.post("/api/extract")
 async def extract(file: UploadFile = File(...), form_type: str = Form(...), category: str = Form(None), comment: str = Form(None)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file uploaded")
@@ -79,6 +76,3 @@ async def extract(file: UploadFile = File(...), form_type: str = Form(...), cate
             os.remove(tmp_path)
         except Exception:
             pass
-
-# Include the router in the main app with the /api prefix
-app.include_router(api_router, prefix="/api")
