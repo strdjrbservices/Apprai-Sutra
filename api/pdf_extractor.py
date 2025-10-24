@@ -1,9 +1,12 @@
 import google.generativeai as genai
 import tempfile
 import json
+import os
 
-genai.configure(api_key="AIzaSyB8eyaZrEvF-YqodfKgtpnKYXP5FeuYjuA")
-
+# genai.configure(api_key="AIzaSyB8eyaZrEvF-YqodfKgtpnKYXP5FeuYjuA")
+# Securely configure the API key from an environment variable
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=GEMINI_API_KEY)
 #{{1004}}
 
 # SUBJECT
