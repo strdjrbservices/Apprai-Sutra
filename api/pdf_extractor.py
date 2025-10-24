@@ -585,7 +585,7 @@ async def extract_fields_from_pdf(pdf_path, form_type: str, category: str = None
              
             if i + chunk_size < len(tasks):
                 print(f"Processed chunk {i//chunk_size + 1}, waiting before next batch...")
-                await asyncio.sleep(60)
+                await asyncio.sleep(2)
 
         for category_name, response in results:
             try:
