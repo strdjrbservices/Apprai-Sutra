@@ -988,6 +988,7 @@ function Subject() {
     const delay = 1000;
 
     let response;
+    const controller = new AbortController();
     for (let i = 0; i < retries; i++) {
       try {
         const formData = new FormData();
@@ -997,13 +998,18 @@ function Subject() {
           formData.append('category', category);
         }
 
-
         const progressInterval = setInterval(() => {
           setExtractionProgress(prev => (prev < 40 ? prev + 5 : prev));
         }, 500);
 
+        // Set a 15-second timeout for the request, which is longer than Vercel's 10s limit.
+        // This helps us catch timeouts on the client-side.
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
         response = await fetch('/api/extract', {
-          method: 'POST', body: formData
+          method: 'POST',
+          body: formData,
+          signal: controller.signal
         });
 
         if (!response.ok) {
@@ -1017,13 +1023,21 @@ function Subject() {
           }
           throw error;
         }
+        clearTimeout(timeoutId);
         clearInterval(progressInterval);
         setExtractionProgress(90);
         return await response.json();
       } catch (error) {
-        if (i < retries - 1) {
+        if (error.name === 'AbortError') {
+          // This is a client-side timeout
+          throw new Error(`The request for the '${category}' section timed out. The server may be overloaded or the section is too large. Please try again in a moment.`);
+        }
+        if (i < retries - 1 && response?.status !== 504) {
           onRetry(i + 1, retries);
           await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
+        } else if (response?.status === 504) {
+          // This is a Vercel Gateway Timeout
+          throw new Error(`The request for the '${category}' section timed out on the server (Vercel). This section may be too large to process. Please try a different section.`);
         } else {
           throw error;
         }
