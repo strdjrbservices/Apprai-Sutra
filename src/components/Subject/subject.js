@@ -1030,7 +1030,7 @@ function Subject() {
       } catch (error) {
         if (error.name === 'AbortError') {
           // This is a client-side timeout
-          throw new Error(`The request for the '${category}' section timed out. The server may be overloaded or the section is too large. Please try again in a moment.`);
+           throw new Error(`The request for the '${category}' section timed out. The server is taking too long to respond. Please try again in a moment.`);
         }
         if (i < retries - 1 && response?.status !== 504) {
           onRetry(i + 1, retries);
